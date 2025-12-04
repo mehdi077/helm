@@ -74,7 +74,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   // Editor styling controls (desktop only - mobile uses hardcoded values)
   const [lineHeight, setLineHeight] = useState(1.6);
   const [horizontalPadding, setHorizontalPadding] = useState(2); // in rem
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   
   // Keyboard visibility for mobile FAB positioning
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -103,7 +108,6 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     editorProps: {
       attributes: {
         class: 'prose prose-invert max-w-none focus:outline-none min-h-screen text-white',
-        style: `line-height: ${lineHeight}; padding: 2rem ${horizontalPadding}rem;`,
       },
     },
   });
@@ -125,16 +129,21 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   // Update editor styles when controls change
   useEffect(() => {
     if (editor) {
+      // On mobile, don't apply inline styles - let CSS handle it
+      const styleAttr = isMobile 
+        ? '' 
+        : `line-height: ${effectiveLineHeight}; padding: 2rem ${effectiveHorizontalPadding}rem;`;
+      
       editor.setOptions({
         editorProps: {
           attributes: {
-            class: 'prose prose-invert max-w-none focus:outline-none min-h-screen text-white',
-            style: `line-height: ${effectiveLineHeight}; padding: 2rem ${effectiveHorizontalPadding}rem;`,
+            class: `prose prose-invert max-w-none focus:outline-none min-h-screen text-white ${isMobile ? 'mobile-editor' : ''}`,
+            style: styleAttr,
           },
         },
       });
     }
-  }, [editor, effectiveLineHeight, effectiveHorizontalPadding]);
+  }, [editor, effectiveLineHeight, effectiveHorizontalPadding, isMobile]);
 
   // Fetch balance from OpenRouter
   const fetchBalance = useCallback(async () => {

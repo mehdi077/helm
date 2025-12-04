@@ -268,41 +268,45 @@ input[type="range"]::-moz-range-thumb {
   border: none;
 }
 
-/* Mobile Editor Styles */
+/* Mobile Editor Styles - applied via .mobile-editor class */
+.ProseMirror.mobile-editor {
+  font-size: 16px !important;
+  min-height: calc(100vh - 100px);
+  line-height: 1.05 !important;
+  padding: 0.5rem 0.35rem !important;
+}
+
+.ProseMirror.mobile-editor *,
+.ProseMirror.mobile-editor p,
+.ProseMirror.mobile-editor span,
+.ProseMirror.mobile-editor div {
+  line-height: 1.05 !important;
+}
+
+.ProseMirror.mobile-editor p {
+  margin: 0 0 0.1em 0 !important;
+}
+
+.ProseMirror.mobile-editor > * + * {
+  margin-top: 0.1em !important;
+}
+
+/* Fallback media query */
 @media (max-width: 768px) {
-  /* Force tight line spacing and minimal margins on mobile */
   .editor-area .ProseMirror {
-    font-size: 16px !important; /* Prevents iOS zoom on focus */
+    font-size: 16px !important;
     min-height: calc(100vh - 100px);
-    line-height: 1.1 !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    line-height: 1.05 !important;
+    padding: 0.5rem 0.35rem !important;
   }
   
-  /* Force all text elements to use tight line height */
   .editor-area .ProseMirror *,
-  .editor-area .prose *,
-  .editor-area .prose-invert * {
-    line-height: 1.1 !important;
+  .editor-area .ProseMirror p {
+    line-height: 1.05 !important;
   }
   
-  .editor-area .ProseMirror p,
-  .editor-area .prose p,
-  .editor-area .prose-invert p {
-    margin-bottom: 0.25em !important;
-    margin-top: 0 !important;
-    line-height: 1.1 !important;
-  }
-  
-  .editor-area .ProseMirror > * + * {
-    margin-top: 0.15em !important;
-  }
-  
-  .editor-area .prose > :first-child,
-  .editor-area .prose-invert > :first-child {
-    margin-top: 0 !important;
+  .editor-area .ProseMirror p {
+    margin: 0 0 0.1em 0 !important;
   }
 }
 
