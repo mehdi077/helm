@@ -7,7 +7,7 @@ import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { debounce } from 'lodash';
-import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split, ArrowDownToLine } from 'lucide-react';
 import { AVAILABLE_MODELS, DEFAULT_MODEL, ModelId, ModelPricing, formatCost } from '@/lib/model-config';
 import { CompletionMark } from '@/lib/completion-mark';
 
@@ -486,6 +486,27 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     setIsAutoCompleting(false);
   }, []);
 
+  // Jump to end of document and scroll into view
+  const jumpToEnd = useCallback(() => {
+    if (!editor) return;
+    
+    // Focus at the end of the document
+    editor.commands.focus('end');
+    
+    // Scroll the cursor into view
+    requestAnimationFrame(() => {
+      const { view } = editor;
+      if (view) {
+        const { from } = view.state.selection;
+        const coords = view.coordsAtPos(from);
+        window.scrollTo({
+          top: coords.top - window.innerHeight + 150,
+          behavior: 'smooth',
+        });
+      }
+    });
+  }, [editor]);
+
   const confirmCompletion = useCallback(() => {
     if (!editor || !completion.isActive || !completion.range) return;
     
@@ -683,11 +704,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [completion.isActive, completion.selectedCount, isAutoCompleting, handleAutoComplete, handleRegenerate, confirmCompletion, cancelCompletion, cancelGeneration, selectNextWord, deselectLastWord, selectAllWords]);
 
-  useEffect(() => {
-    if (editor && initialContent && editor.isEmpty) {
-       // Content init logic
-    }
-  }, [initialContent, editor]);
+
 
   // Detect mobile keyboard visibility using Visual Viewport API
   useEffect(() => {
@@ -1121,18 +1138,33 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           </button>
         )}
 
-        {/* Main FAB - Generate completion */}
+        {/* Main FAB buttons - Generate completion + Jump to end */}
         {!completion.isActive && !isAutoCompleting && (
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onTouchStart={(e) => e.preventDefault()}
-            onClick={handleAutoComplete}
-            className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
-            title="Generate AI completion"
-          >
-            <Split size={24} />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Jump to end button */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
+              onClick={jumpToEnd}
+              className="p-3 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all shadow-lg active:scale-95"
+              title="Jump to end"
+            >
+              <ArrowDownToLine size={20} />
+            </button>
+            
+            {/* Generate completion button */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
+              onClick={handleAutoComplete}
+              className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
+              title="Generate AI completion"
+            >
+              <Split size={24} />
+            </button>
+          </div>
         )}
       </div>
     </div>
