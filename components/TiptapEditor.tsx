@@ -88,6 +88,9 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   // Track if component is mounted (for portal SSR safety)
   const [isMounted, setIsMounted] = useState(false);
   
+  // Ref for FAB container to intercept touches
+  const fabContainerRef = useRef<HTMLDivElement>(null);
+  
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -719,6 +722,39 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     };
   }, []);
 
+  // Intercept touches in the FAB area to prevent them from reaching the editor
+  useEffect(() => {
+    if (!isMobile || !isMounted) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const fabContainer = fabContainerRef.current;
+      if (!fabContainer) return;
+
+      const touch = e.touches[0];
+      const rect = fabContainer.getBoundingClientRect();
+      
+      // Check if touch is within FAB container bounds
+      if (
+        touch.clientX >= rect.left &&
+        touch.clientX <= rect.right &&
+        touch.clientY >= rect.top &&
+        touch.clientY <= rect.bottom
+      ) {
+        // Touch is in FAB area - prevent it from reaching editor
+        // Note: This might prevent scrolling in this area, but ensures FAB is clickable
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    // Use capture phase to intercept before editor receives it
+    document.addEventListener('touchstart', handleTouchStart, { capture: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+    };
+  }, [isMobile, isMounted]);
+
   if (!editor) {
     return null;
   }
@@ -1025,11 +1061,22 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       {/* Mobile Touch Controls - rendered via Portal to ensure proper z-index on iOS */}
       {isMounted && createPortal(
         <div 
-          className="fixed right-6 z-[9999] flex flex-col items-end gap-3 transition-all duration-200"
+          ref={fabContainerRef}
+          className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 pb-6 select-none"
+          contentEditable={false}
           style={{ 
-            bottom: keyboardHeight > 0 ? `${keyboardHeight + 24}px` : '24px',
+            bottom: '0px',
+            paddingBottom: 'env(safe-area-inset-bottom, 24px)',
+            height: completion.isActive ? '180px' : '120px',
+            width: completion.isActive ? '100%' : '100px',
             pointerEvents: 'auto',
-            isolation: 'isolate',
+            background: 'rgba(0,0,0,0.8)',
+            WebkitTapHighlightColor: 'transparent',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+            WebkitTouchCallout: 'none',
+            transform: 'translateZ(0)',
+            WebkitTransform: 'translateZ(0)',
           }}
         >
           {/* Completion Controls - shown when completion is active */}
