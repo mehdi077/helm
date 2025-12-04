@@ -1035,11 +1035,15 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       {isMounted && createPortal(
         <div 
           ref={fabContainerRef}
-          className="fixed right-4 z-[9999] flex flex-col items-end gap-2 select-none md:hidden"
+          className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 pb-6 select-none"
           contentEditable={false}
           style={{ 
-            top: 'max(16px, env(safe-area-inset-top, 16px))',
-            pointerEvents: 'none',
+            bottom: '0px',
+            paddingBottom: 'env(safe-area-inset-bottom, 24px)',
+            height: completion.isActive ? '180px' : '120px',
+            width: completion.isActive ? '100%' : '100px',
+            pointerEvents: 'auto',
+            background: 'rgba(0,0,0,0.8)',
             WebkitTapHighlightColor: 'transparent',
             WebkitUserSelect: 'none',
             userSelect: 'none',
@@ -1050,7 +1054,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         >
           {/* Completion Controls - shown when completion is active */}
           {completion.isActive && (
-            <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50" style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}>
+            <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50" style={{ touchAction: 'manipulation' }}>
               {/* Word count indicator */}
               <span className="text-xs text-zinc-400 px-2">
                 {completion.selectedCount}/{completion.words.length}
@@ -1165,7 +1169,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               onTouchEnd={(e) => { e.preventDefault(); cancelGeneration(); }}
               onClick={cancelGeneration}
               className="p-3 rounded-full bg-zinc-900/95 backdrop-blur-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-all shadow-lg border border-zinc-700/50 select-none"
-              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', pointerEvents: 'auto' }}
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
               title="Cancel generation"
             >
               <X size={22} />
@@ -1182,7 +1186,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               onTouchEnd={(e) => { e.preventDefault(); handleAutoComplete(); }}
               onClick={handleAutoComplete}
               className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95 select-none"
-              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', pointerEvents: 'auto' }}
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
               title="Generate AI completion"
             >
               <Split size={24} />
