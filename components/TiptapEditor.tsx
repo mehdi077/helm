@@ -7,7 +7,7 @@ import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { debounce } from 'lodash';
-import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split, AlignJustify, MoveHorizontal } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split } from 'lucide-react';
 import { AVAILABLE_MODELS, DEFAULT_MODEL, ModelId, ModelPricing, formatCost } from '@/lib/model-config';
 import { CompletionMark } from '@/lib/completion-mark';
 
@@ -71,9 +71,10 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   const [lastGenerationCost, setLastGenerationCost] = useState<number | null>(null);
   const [promptsLoaded, setPromptsLoaded] = useState(false);
   
-  // Editor styling controls
+  // Editor styling controls (desktop only - mobile uses hardcoded values)
   const [lineHeight, setLineHeight] = useState(1.6);
   const [horizontalPadding, setHorizontalPadding] = useState(2); // in rem
+  const [isMobile, setIsMobile] = useState(false);
   
   // Keyboard visibility for mobile FAB positioning
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -107,6 +108,20 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     },
   });
 
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Get effective values (mobile uses hardcoded tight values)
+  const effectiveLineHeight = isMobile ? 1.2 : lineHeight;
+  const effectiveHorizontalPadding = isMobile ? 0.5 : horizontalPadding;
+
   // Update editor styles when controls change
   useEffect(() => {
     if (editor) {
@@ -114,12 +129,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         editorProps: {
           attributes: {
             class: 'prose prose-invert max-w-none focus:outline-none min-h-screen text-white',
-            style: `line-height: ${lineHeight}; padding: 2rem ${horizontalPadding}rem;`,
+            style: `line-height: ${effectiveLineHeight}; padding: 2rem ${effectiveHorizontalPadding}rem;`,
           },
         },
       });
     }
-  }, [editor, lineHeight, horizontalPadding]);
+  }, [editor, effectiveLineHeight, effectiveHorizontalPadding]);
 
   // Fetch balance from OpenRouter
   const fetchBalance = useCallback(async () => {
@@ -928,48 +943,6 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
                   title={color}
                 />
               ))}
-            </div>
-          </div>
-
-          {/* Line Spacing Control */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm"><AlignJustify size={16} /> Line Spacing</span>
-              <span className="text-xs text-zinc-500">{lineHeight.toFixed(1)}</span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="3"
-              step="0.1"
-              value={lineHeight}
-              onChange={(e) => setLineHeight(parseFloat(e.target.value))}
-              className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-            />
-            <div className="flex justify-between text-xs text-zinc-500">
-              <span>Tight</span>
-              <span>Relaxed</span>
-            </div>
-          </div>
-
-          {/* Horizontal Margins Control */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm"><MoveHorizontal size={16} /> Margins</span>
-              <span className="text-xs text-zinc-500">{horizontalPadding.toFixed(1)}rem</span>
-            </div>
-            <input
-              type="range"
-              min="0.5"
-              max="6"
-              step="0.5"
-              value={horizontalPadding}
-              onChange={(e) => setHorizontalPadding(parseFloat(e.target.value))}
-              className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-            />
-            <div className="flex justify-between text-xs text-zinc-500">
-              <span>Narrow</span>
-              <span>Wide</span>
             </div>
           </div>
         </div>
