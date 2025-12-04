@@ -640,9 +640,9 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
   return (
     <div className={`flex w-full min-h-screen bg-black text-white relative ${completion.isActive ? 'completion-active' : ''} ${isAutoCompleting ? 'generating' : ''}`}>
-      {/* Completion Mode Indicator */}
+      {/* Completion Mode Indicator - Hidden on mobile (mobile has touch controls) */}
       {completion.isActive && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 text-sm">
+        <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-[70] bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg items-center gap-3 text-sm">
           <Sparkles size={16} />
           <span>
             <strong>{completion.selectedCount}</strong> / {completion.words.length} words selected
@@ -820,7 +820,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         type="button"
         onClick={toggleLeftSidebar}
         className={`fixed top-8 z-[60] p-2 bg-zinc-800 rounded-r-md text-white transition-all duration-300 cursor-pointer hover:bg-zinc-700 ${
-          isLeftSidebarOpen ? 'left-72' : 'left-0'
+          isLeftSidebarOpen ? 'left-72 max-md:left-72' : 'left-0'
         }`}
       >
         {isLeftSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
@@ -895,14 +895,25 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         type="button"
         onClick={toggleSidebar}
         className={`fixed top-8 z-[60] p-2 bg-zinc-800 rounded-l-md text-white transition-all duration-300 cursor-pointer hover:bg-zinc-700 ${
-          isSidebarOpen ? 'right-64' : 'right-0'
+          isSidebarOpen ? 'right-64 max-md:right-64' : 'right-0'
         }`}
       >
         {isSidebarOpen ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
       </button>
 
+      {/* Mobile Sidebar Overlay */}
+      {(isLeftSidebarOpen || isSidebarOpen) && (
+        <div 
+          className="sidebar-overlay md:hidden"
+          onClick={() => {
+            setIsLeftSidebarOpen(false);
+            setIsSidebarOpen(false);
+          }}
+        />
+      )}
+
       {/* Editor Area */}
-      <div className={`flex-1 transition-all duration-300 relative ${isSidebarOpen ? 'mr-64' : ''} ${isLeftSidebarOpen ? 'ml-72' : ''}`}>
+      <div className={`flex-1 transition-all duration-300 relative ${isSidebarOpen ? 'md:mr-64' : ''} ${isLeftSidebarOpen ? 'md:ml-72' : ''}`}>
         <EditorContent editor={editor} />
         
         {/* Loading Indicator Overlay */}
