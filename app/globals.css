@@ -326,3 +326,17 @@ input[type="range"]::-moz-range-thumb {
     to { opacity: 1; }
   }
 }
+
+/* Mobile FAB touch fix - ensure FAB is always clickable above editor */
+@media (max-width: 768px) {
+  .editor-area {
+    /* Prevent editor from capturing touches in FAB area */
+    position: relative;
+    z-index: 1;
+  }
+  
+  .editor-area .ProseMirror {
+    /* Add bottom padding to prevent content under FAB */
+    padding-bottom: 100px !important;
+  }
+}
