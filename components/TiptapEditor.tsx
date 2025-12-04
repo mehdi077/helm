@@ -1035,10 +1035,10 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       {isMounted && createPortal(
         <div 
           ref={fabContainerRef}
-          className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-4 select-none md:hidden"
+          className="fixed right-4 z-[9999] flex flex-col items-end gap-2 select-none md:hidden"
           contentEditable={false}
           style={{ 
-            bottom: keyboardHeight > 0 ? `${keyboardHeight + 12}px` : 'max(24px, env(safe-area-inset-bottom, 24px))',
+            top: 'max(16px, env(safe-area-inset-top, 16px))',
             pointerEvents: 'none',
             WebkitTapHighlightColor: 'transparent',
             WebkitUserSelect: 'none',
