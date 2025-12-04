@@ -215,10 +215,10 @@ body {
 /* Override prose plugin defaults to allow dynamic control */
 .editor-area .prose,
 .editor-area .prose-invert,
-.editor-area .prose p,
-.editor-area .prose-invert p,
-.editor-area .prose li,
-.editor-area .prose-invert li {
+.editor-area .prose *,
+.editor-area .prose-invert *,
+.editor-area .ProseMirror,
+.editor-area .ProseMirror * {
   line-height: inherit !important;
 }
 
@@ -279,8 +279,10 @@ input[type="range"]::-moz-range-thumb {
   /* Override prose plugin's line-height to allow inline styles to work */
   .editor-area .prose,
   .editor-area .prose-invert,
-  .editor-area .prose p,
-  .editor-area .prose-invert p {
+  .editor-area .prose *,
+  .editor-area .prose-invert *,
+  .editor-area .ProseMirror,
+  .editor-area .ProseMirror * {
     line-height: inherit !important;
   }
   
