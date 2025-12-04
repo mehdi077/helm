@@ -7,7 +7,7 @@ import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { debounce } from 'lodash';
-import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split, ArrowDownToLine } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split } from 'lucide-react';
 import { AVAILABLE_MODELS, DEFAULT_MODEL, ModelId, ModelPricing, formatCost } from '@/lib/model-config';
 import { CompletionMark } from '@/lib/completion-mark';
 
@@ -486,27 +486,6 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     setIsAutoCompleting(false);
   }, []);
 
-  // Jump to end of document and scroll into view
-  const jumpToEnd = useCallback(() => {
-    if (!editor) return;
-    
-    // Focus at the end of the document
-    editor.commands.focus('end');
-    
-    // Scroll the cursor into view
-    requestAnimationFrame(() => {
-      const { view } = editor;
-      if (view) {
-        const { from } = view.state.selection;
-        const coords = view.coordsAtPos(from);
-        window.scrollTo({
-          top: coords.top - window.innerHeight + 150,
-          behavior: 'smooth',
-        });
-      }
-    });
-  }, [editor]);
-
   const confirmCompletion = useCallback(() => {
     if (!editor || !completion.isActive || !completion.range) return;
     
@@ -703,6 +682,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [completion.isActive, completion.selectedCount, isAutoCompleting, handleAutoComplete, handleRegenerate, confirmCompletion, cancelCompletion, cancelGeneration, selectNextWord, deselectLastWord, selectAllWords]);
+
+  useEffect(() => {
+    if (editor && initialContent && editor.isEmpty) {
+       // Content init logic
+    }
+  }, [initialContent, editor]);
 
   // Detect mobile keyboard visibility using Visual Viewport API
   useEffect(() => {
@@ -1030,8 +1015,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
       {/* Mobile Touch Controls - moves up when keyboard is visible */}
       <div 
-        className="fixed right-6 bottom-6 z-[9999] flex flex-col items-end gap-3 transition-transform duration-200 pointer-events-auto"
-        style={{ transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none' }}
+        className="fixed right-6 z-[80] flex flex-col items-end gap-3 transition-all duration-200"
+        style={{ bottom: keyboardHeight > 0 ? `${keyboardHeight + 24}px` : '24px' }}
       >
         {/* Completion Controls - shown when completion is active */}
         {completion.isActive && (
@@ -1044,6 +1029,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Deselect word */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={deselectLastWord}
               disabled={completion.selectedCount === 0}
               className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -1055,6 +1042,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Select next word */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={selectNextWord}
               disabled={completion.selectedCount >= completion.words.length}
               className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -1066,6 +1055,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Select all */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={selectAllWords}
               disabled={completion.selectedCount >= completion.words.length}
               className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -1081,6 +1072,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {completion.selectedCount === 0 ? (
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
                 onClick={handleRegenerate}
                 className="p-2 rounded-full text-amber-400 hover:text-amber-300 hover:bg-zinc-700 transition-colors"
                 title="Regenerate"
@@ -1090,6 +1083,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             ) : (
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
                 onClick={confirmCompletion}
                 className="p-2 rounded-full text-green-400 hover:text-green-300 hover:bg-zinc-700 transition-colors"
                 title="Confirm"
@@ -1101,6 +1096,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Cancel */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={cancelCompletion}
               className="p-2 rounded-full text-red-400 hover:text-red-300 hover:bg-zinc-700 transition-colors"
               title="Cancel"
@@ -1114,6 +1111,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         {isAutoCompleting && !completion.isActive && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
             onClick={cancelGeneration}
             className="p-3 rounded-full bg-zinc-900/95 backdrop-blur-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-all shadow-lg border border-zinc-700/50"
             title="Cancel generation"
@@ -1122,29 +1121,18 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           </button>
         )}
 
-        {/* Main FAB buttons - Generate completion + Jump to end */}
+        {/* Main FAB - Generate completion */}
         {!completion.isActive && !isAutoCompleting && (
-          <div className="flex items-center gap-3">
-            {/* Jump to end button */}
-            <button
-              type="button"
-              onClick={jumpToEnd}
-              className="p-3 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all shadow-lg active:scale-95"
-              title="Jump to end"
-            >
-              <ArrowDownToLine size={20} />
-            </button>
-            
-            {/* Generate completion button */}
-            <button
-              type="button"
-              onClick={handleAutoComplete}
-              className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
-              title="Generate AI completion"
-            >
-              <Split size={24} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
+            onClick={handleAutoComplete}
+            className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
+            title="Generate AI completion"
+          >
+            <Split size={24} />
+          </button>
         )}
       </div>
     </div>
