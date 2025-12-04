@@ -372,6 +372,9 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   // Handle regeneration when Tab is pressed with no words selected
   const handleRegenerate = useCallback(async () => {
     if (!editor || isAutoCompleting || !completion.isActive || !completion.range) return;
+    
+    // Keep editor focused (prevents keyboard from hiding on mobile)
+    editor.commands.focus();
 
     // Get the current ghost text before removing it
     const currentCompletionText = completionTextRef.current.trim();
@@ -485,6 +488,9 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
   const confirmCompletion = useCallback(() => {
     if (!editor || !completion.isActive || !completion.range) return;
+    
+    // Keep editor focused (prevents keyboard from hiding on mobile)
+    editor.commands.focus();
 
     const { from, to } = completion.range;
     const selectedWords = completion.words.slice(0, completion.selectedCount);
@@ -524,6 +530,9 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
   const cancelCompletion = useCallback(() => {
     if (!editor || !completion.isActive || !completion.range) return;
+    
+    // Keep editor focused (prevents keyboard from hiding on mobile)
+    editor.commands.focus();
 
     const { from, to } = completion.range;
     
@@ -1020,6 +1029,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Deselect word */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={deselectLastWord}
               disabled={completion.selectedCount === 0}
               className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -1031,6 +1042,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Select next word */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={selectNextWord}
               disabled={completion.selectedCount >= completion.words.length}
               className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -1042,6 +1055,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Select all */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={selectAllWords}
               disabled={completion.selectedCount >= completion.words.length}
               className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -1057,6 +1072,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {completion.selectedCount === 0 ? (
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
                 onClick={handleRegenerate}
                 className="p-2 rounded-full text-amber-400 hover:text-amber-300 hover:bg-zinc-700 transition-colors"
                 title="Regenerate"
@@ -1066,6 +1083,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             ) : (
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
                 onClick={confirmCompletion}
                 className="p-2 rounded-full text-green-400 hover:text-green-300 hover:bg-zinc-700 transition-colors"
                 title="Confirm"
@@ -1077,6 +1096,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             {/* Cancel */}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
               onClick={cancelCompletion}
               className="p-2 rounded-full text-red-400 hover:text-red-300 hover:bg-zinc-700 transition-colors"
               title="Cancel"
@@ -1090,6 +1111,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         {isAutoCompleting && !completion.isActive && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
             onClick={cancelGeneration}
             className="p-3 rounded-full bg-zinc-900/95 backdrop-blur-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-all shadow-lg border border-zinc-700/50"
             title="Cancel generation"
