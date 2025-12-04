@@ -101,10 +101,25 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none focus:outline-none min-h-screen p-8 text-white',
+        class: 'prose prose-invert max-w-none focus:outline-none min-h-screen text-white',
+        style: `line-height: ${lineHeight}; padding: 2rem ${horizontalPadding}rem;`,
       },
     },
   });
+
+  // Update editor styles when controls change
+  useEffect(() => {
+    if (editor) {
+      editor.setOptions({
+        editorProps: {
+          attributes: {
+            class: 'prose prose-invert max-w-none focus:outline-none min-h-screen text-white',
+            style: `line-height: ${lineHeight}; padding: 2rem ${horizontalPadding}rem;`,
+          },
+        },
+      });
+    }
+  }, [editor, lineHeight, horizontalPadding]);
 
   // Fetch balance from OpenRouter
   const fetchBalance = useCallback(async () => {
@@ -983,13 +998,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       )}
 
       {/* Editor Area */}
-      <div 
-        className={`flex-1 transition-all duration-300 relative editor-area ${isSidebarOpen ? 'md:mr-64' : ''} ${isLeftSidebarOpen ? 'md:ml-72' : ''}`}
-        style={{
-          ['--editor-line-height' as string]: lineHeight,
-          ['--editor-padding' as string]: `${horizontalPadding}rem`,
-        } as React.CSSProperties}
-      >
+      <div className={`flex-1 transition-all duration-300 relative editor-area ${isSidebarOpen ? 'md:mr-64' : ''} ${isLeftSidebarOpen ? 'md:ml-72' : ''}`}>
         <EditorContent editor={editor} />
         
         {/* Loading Indicator Overlay */}

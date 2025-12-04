@@ -207,11 +207,8 @@ body {
   margin-bottom: 0;
 }
 
-/* Editor styling from controls */
+/* Editor styling transitions */
 .editor-area .ProseMirror {
-  line-height: var(--editor-line-height, 1.6);
-  padding-left: var(--editor-padding, 2rem);
-  padding-right: var(--editor-padding, 2rem);
   transition: padding 0.2s ease, line-height 0.2s ease;
 }
 
@@ -263,35 +260,31 @@ input[type="range"]::-moz-range-thumb {
 
 /* Mobile Editor Styles */
 @media (max-width: 768px) {
-  /* Fix line spacing on mobile - use CSS variables but with sensible fallbacks */
+  /* Mobile-specific adjustments */
   .ProseMirror {
-    padding-left: var(--editor-padding, 1rem) !important;
-    padding-right: var(--editor-padding, 1rem) !important;
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
     font-size: 16px !important; /* Prevents iOS zoom on focus */
-    line-height: var(--editor-line-height, 1.6) !important;
+    min-height: calc(100vh - 100px);
   }
   
   .ProseMirror p {
-    margin-bottom: 0.5em !important;
-    margin-top: 0 !important;
+    margin-bottom: 0.5em;
+    margin-top: 0;
   }
   
   .ProseMirror > * + * {
-    margin-top: 0.25em !important;
+    margin-top: 0.25em;
   }
   
   /* Prevent large gaps in prose */
   .prose p,
   .prose-invert p {
-    margin-top: 0 !important;
-    margin-bottom: 0.5em !important;
+    margin-top: 0;
+    margin-bottom: 0.5em;
   }
   
   .prose > :first-child,
   .prose-invert > :first-child {
-    margin-top: 0 !important;
+    margin-top: 0;
   }
 }
 
