@@ -1038,8 +1038,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 pb-6 select-none"
           contentEditable={false}
           style={{ 
-            bottom: '0px',
-            paddingBottom: 'env(safe-area-inset-bottom, 24px)',
+            bottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0px',
+            paddingBottom: keyboardHeight > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)',
             height: completion.isActive ? '180px' : '120px',
             width: completion.isActive ? '100%' : '100px',
             pointerEvents: 'auto',
