@@ -8,11 +8,19 @@ import path from 'path';
 const dbPath = path.join(process.cwd(), 'data.db');
 const db = new Database(dbPath);
 
-// Create table if not exists
+// Create tables if not exists
 db.exec(`
   CREATE TABLE IF NOT EXISTS documents (
     id TEXT PRIMARY KEY,
     content TEXT,
+    updated_at TEXT
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
     updated_at TEXT
   )
 `);

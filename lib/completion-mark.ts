@@ -9,6 +9,7 @@ declare module '@tiptap/core' {
     completionMark: {
       setCompletionMark: () => ReturnType;
       unsetCompletionMark: () => ReturnType;
+      clearCompletionMark: () => ReturnType;
     };
   }
 }
@@ -45,6 +46,20 @@ export const CompletionMark = Mark.create<CompletionMarkOptions>({
         () =>
         ({ commands }) => {
           return commands.unsetMark(this.name);
+        },
+      clearCompletionMark:
+        () =>
+        ({ tr, dispatch }) => {
+          if (dispatch) {
+            // Remove the mark from stored marks to prevent it from being applied to new text
+            const markType = this.type;
+            if (tr.storedMarks) {
+              tr.setStoredMarks(tr.storedMarks.filter(m => m.type !== markType));
+            }
+            // Also remove from the current selection if any
+            tr.removeStoredMark(markType);
+          }
+          return true;
         },
     };
   },

@@ -33,8 +33,9 @@ export async function POST(request: NextRequest) {
 
     console.log('\n========== API CALL ==========');
     console.log('Model:', modelId || DEFAULT_MODEL);
+    console.log('==============================\n');
     console.log('Prompt:', userPromptText);
-    console.log('Text context:', text);
+    console.log('==============================\n');
     console.log('Full message:', `${userPromptText} ${text}`);
     console.log('==============================\n');
 

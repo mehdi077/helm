@@ -67,12 +67,7 @@ OPENROUTER_API_KEY=your_openrouter_api_key_here
 DATABASE_PATH=./data.db
 ```
 
-4. Initialize the database:
-```bash
-npm run db:init
-```
-
-5. Start the development server:
+4. Start the development server:
 ```bash
 npm run dev
 # or
@@ -83,7 +78,7 @@ pnpm dev
 bun dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Usage Guide
 

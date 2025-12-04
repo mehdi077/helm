@@ -38,3 +38,157 @@ body {
 .completion-active .ProseMirror {
   caret-color: #60a5fa;
 }
+
+/* AI Generation Loading Animation */
+.ai-loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+  z-index: 100;
+}
+
+.ai-loading-indicator.absolute {
+  transform: translateY(-50%);
+}
+
+.ai-loading-indicator .orbit-container {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.ai-loading-indicator .orbit-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #60a5fa;
+}
+
+.ai-loading-indicator .orbit-dot:nth-child(1) {
+  animation: orbit1 1.2s ease-in-out infinite;
+}
+
+.ai-loading-indicator .orbit-dot:nth-child(2) {
+  animation: orbit2 1.2s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+.ai-loading-indicator .orbit-dot:nth-child(3) {
+  animation: orbit3 1.2s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+@keyframes orbit1 {
+  0%, 100% {
+    top: 50%;
+    left: 0;
+    transform: translate(0, -50%) scale(1);
+    opacity: 1;
+    background: #60a5fa;
+  }
+  33% {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0) scale(1.2);
+    opacity: 0.8;
+    background: #a78bfa;
+  }
+  66% {
+    top: 50%;
+    left: 100%;
+    transform: translate(-100%, -50%) scale(0.8);
+    opacity: 0.6;
+    background: #f472b6;
+  }
+}
+
+@keyframes orbit2 {
+  0%, 100% {
+    top: 50%;
+    left: 0;
+    transform: translate(0, -50%) scale(1);
+    opacity: 1;
+    background: #60a5fa;
+  }
+  33% {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0) scale(1.2);
+    opacity: 0.8;
+    background: #a78bfa;
+  }
+  66% {
+    top: 50%;
+    left: 100%;
+    transform: translate(-100%, -50%) scale(0.8);
+    opacity: 0.6;
+    background: #f472b6;
+  }
+}
+
+@keyframes orbit3 {
+  0%, 100% {
+    top: 50%;
+    left: 0;
+    transform: translate(0, -50%) scale(1);
+    opacity: 1;
+    background: #60a5fa;
+  }
+  33% {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0) scale(1.2);
+    opacity: 0.8;
+    background: #a78bfa;
+  }
+  66% {
+    top: 50%;
+    left: 100%;
+    transform: translate(-100%, -50%) scale(0.8);
+    opacity: 0.6;
+    background: #f472b6;
+  }
+}
+
+/* Hide cursor during generation */
+.generating .ProseMirror {
+  caret-color: transparent;
+}
+
+/* Mobile FAB animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+/* Mobile control bar entrance animation */
+.fixed.bottom-6 > div,
+.fixed.bottom-6 > button {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+/* Subtle pulse on main FAB to draw attention */
+.fixed.bottom-6 button[title="Generate AI completion"] {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.fixed.bottom-6 button[title="Generate AI completion"]:hover {
+  animation: none;
+}

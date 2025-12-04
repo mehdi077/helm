@@ -6,7 +6,8 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw } from 'lucide-react';
+import { debounce } from 'lodash';
+import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split } from 'lucide-react';
 import { AVAILABLE_MODELS, DEFAULT_MODEL, ModelId, ModelPricing, formatCost } from '@/lib/model-config';
 import { CompletionMark } from '@/lib/completion-mark';
 
@@ -59,6 +60,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     range: null,
   });
   const completionTextRef = useRef<string>('');
+  const abortControllerRef = useRef<AbortController | null>(null);
   // Force re-render on editor updates to reflect active states in toolbar
   const [, forceUpdate] = useState({});
   
@@ -67,6 +69,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [modelPricing, setModelPricing] = useState<ModelPricingMap>({});
   const [lastGenerationCost, setLastGenerationCost] = useState<number | null>(null);
+  const [promptsLoaded, setPromptsLoaded] = useState(false);
   
   const editor = useEditor({
     immediatelyRender: false,
@@ -129,11 +132,51 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     }
   }, []);
 
-  // Fetch balance and pricing on mount
+  // Fetch prompts from database
+  const fetchPrompts = useCallback(async () => {
+    try {
+      const response = await fetch('/api/prompts');
+      if (response.ok) {
+        const data = await response.json();
+        setCustomPrompt(data.customPrompt);
+        setRegenPromptTemplate(data.regenPromptTemplate);
+      }
+    } catch (error) {
+      console.error('Failed to fetch prompts:', error);
+    } finally {
+      setPromptsLoaded(true);
+    }
+  }, []);
+
+  // Debounced save prompts function
+  const savePrompts = useCallback(
+    debounce(async (prompt: string, regenTemplate: string) => {
+      try {
+        await fetch('/api/prompts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customPrompt: prompt, regenPromptTemplate: regenTemplate }),
+        });
+      } catch (error) {
+        console.error('Failed to save prompts:', error);
+      }
+    }, 1000),
+    []
+  );
+
+  // Fetch balance, pricing, and prompts on mount
   useEffect(() => {
     fetchBalance();
     fetchModelPricing();
-  }, [fetchBalance, fetchModelPricing]);
+    fetchPrompts();
+  }, [fetchBalance, fetchModelPricing, fetchPrompts]);
+
+  // Save prompts when they change (after initial load)
+  useEffect(() => {
+    if (promptsLoaded) {
+      savePrompts(customPrompt, regenPromptTemplate);
+    }
+  }, [customPrompt, regenPromptTemplate, promptsLoaded, savePrompts]);
 
   // Build regeneration prompt from template
   const buildRegenPrompt = useCallback((attempts: string[]) => {
@@ -166,6 +209,21 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     return textForCompletion;
   }, [editor]);
 
+  // Loader position state
+  const [loaderPosition, setLoaderPosition] = useState<{ top: number; left: number } | null>(null);
+
+  // Get cursor coordinates for loader positioning
+  const getCursorCoords = useCallback(() => {
+    if (!editor) return null;
+    const { from } = editor.state.selection;
+    const coords = editor.view.coordsAtPos(from);
+    const editorRect = editor.view.dom.getBoundingClientRect();
+    return {
+      top: coords.top - editorRect.top + editor.view.dom.scrollTop,
+      left: coords.left - editorRect.left,
+    };
+  }, [editor]);
+
   const handleAutoComplete = useCallback(async () => {
     if (!editor || isAutoCompleting) return;
 
@@ -178,14 +236,24 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     setIsAutoCompleting(true);
     setAutoCompleteError(null);
 
+    // Show loading indicator at cursor position
+    setLoaderPosition(getCursorCoords());
+
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     try {
       const response = await fetch('/api/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, modelId: selectedModel, prompt: customPrompt }),
+        signal: abortControllerRef.current.signal,
       });
 
       const data = await response.json();
+
+      // Hide loading indicator
+      setLoaderPosition(null);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get completion');
@@ -237,13 +305,20 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       // Refresh balance after successful generation
       fetchBalance();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to get completion';
-      setAutoCompleteError(message);
-      console.error('Auto-complete error:', error);
+      setLoaderPosition(null);
+      // Don't show error for aborted requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Generation cancelled');
+      } else {
+        const message = error instanceof Error ? error.message : 'Failed to get completion';
+        setAutoCompleteError(message);
+        console.error('Auto-complete error:', error);
+      }
     } finally {
       setIsAutoCompleting(false);
+      abortControllerRef.current = null;
     }
-  }, [editor, isAutoCompleting, getTextForCompletion, selectedModel, customPrompt, fetchBalance, modelPricing]);
+  }, [editor, isAutoCompleting, getTextForCompletion, selectedModel, customPrompt, fetchBalance, modelPricing, getCursorCoords]);
 
   // Handle regeneration when Tab is pressed with no words selected
   const handleRegenerate = useCallback(async () => {
@@ -263,6 +338,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     setIsAutoCompleting(true);
     setAutoCompleteError(null);
 
+    // Show loading indicator at cursor position
+    setLoaderPosition(getCursorCoords());
+
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     try {
       const text = getTextForCompletion();
       const regenPrompt = buildRegenPrompt(newAttempts);
@@ -271,9 +352,13 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, modelId: selectedModel, prompt: regenPrompt }),
+        signal: abortControllerRef.current.signal,
       });
 
       const data = await response.json();
+
+      // Hide loading indicator
+      setLoaderPosition(null);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get completion');
@@ -324,13 +409,30 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       // Refresh balance after successful generation
       fetchBalance();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to regenerate';
-      setAutoCompleteError(message);
-      console.error('Regenerate error:', error);
+      setLoaderPosition(null);
+      // Don't show error for aborted requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Regeneration cancelled');
+      } else {
+        const message = error instanceof Error ? error.message : 'Failed to regenerate';
+        setAutoCompleteError(message);
+        console.error('Regenerate error:', error);
+      }
     } finally {
       setIsAutoCompleting(false);
+      abortControllerRef.current = null;
     }
-  }, [editor, isAutoCompleting, completion, attemptHistory, getTextForCompletion, buildRegenPrompt, selectedModel, fetchBalance, modelPricing]);
+  }, [editor, isAutoCompleting, completion, attemptHistory, getTextForCompletion, buildRegenPrompt, selectedModel, fetchBalance, modelPricing, getCursorCoords]);
+
+  // Cancel ongoing generation
+  const cancelGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setLoaderPosition(null);
+    setIsAutoCompleting(false);
+  }, []);
 
   const confirmCompletion = useCallback(() => {
     if (!editor || !completion.isActive || !completion.range) return;
@@ -338,14 +440,27 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     const { from, to } = completion.range;
     const selectedWords = completion.words.slice(0, completion.selectedCount);
     
-    // Delete the ghost text
-    editor.chain().focus().setTextSelection({ from, to }).deleteSelection().run();
+    // Build the text to keep (with leading space if original had one)
+    const hasLeadingSpace = completionTextRef.current.startsWith(' ');
+    const textToKeep = selectedWords.length > 0 
+      ? (hasLeadingSpace ? ' ' : '') + selectedWords.join(' ')
+      : '';
     
-    // Insert the selected words as regular text
-    if (selectedWords.length > 0) {
-      const textToInsert = ' ' + selectedWords.join(' ');
-      editor.chain().focus().insertContent(textToInsert).run();
+    // Delete the entire ghost text range
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from, to })
+      .deleteSelection()
+      .run();
+    
+    // Insert the selected words as regular text (without any marks)
+    if (textToKeep) {
+      editor.chain().focus().clearCompletionMark().insertContent(textToKeep).run();
     }
+    
+    // Ensure mark is fully cleared
+    editor.chain().focus().clearCompletionMark().run();
     
     completionTextRef.current = '';
     // Clear attempt history when words are confirmed
@@ -363,8 +478,15 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
     const { from, to } = completion.range;
     
-    // Delete the ghost text
-    editor.chain().focus().setTextSelection({ from, to }).deleteSelection().run();
+    // Delete the ghost text and clear the completion mark to reset styling
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from, to })
+      .unsetCompletionMark()
+      .deleteSelection()
+      .clearCompletionMark()
+      .run();
     
     completionTextRef.current = '';
     // Clear attempt history when cancelled
@@ -451,6 +573,17 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   // Handle keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle Escape - cancel generation or completion
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (isAutoCompleting) {
+          cancelGeneration();
+        } else if (completion.isActive) {
+          cancelCompletion();
+        }
+        return;
+      }
+
       if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
         
@@ -485,18 +618,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           selectAllWords();
           return;
         }
-        
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          cancelCompletion();
-          return;
-        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [completion.isActive, completion.selectedCount, isAutoCompleting, handleAutoComplete, handleRegenerate, confirmCompletion, cancelCompletion, selectNextWord, deselectLastWord, selectAllWords]);
+  }, [completion.isActive, completion.selectedCount, isAutoCompleting, handleAutoComplete, handleRegenerate, confirmCompletion, cancelCompletion, cancelGeneration, selectNextWord, deselectLastWord, selectAllWords]);
 
   useEffect(() => {
     if (editor && initialContent && editor.isEmpty) {
@@ -512,7 +639,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   const toggleLeftSidebar = () => setIsLeftSidebarOpen(!isLeftSidebarOpen);
 
   return (
-    <div className={`flex w-full min-h-screen bg-black text-white relative ${completion.isActive ? 'completion-active' : ''}`}>
+    <div className={`flex w-full min-h-screen bg-black text-white relative ${completion.isActive ? 'completion-active' : ''} ${isAutoCompleting ? 'generating' : ''}`}>
       {/* Completion Mode Indicator */}
       {completion.isActive && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-3 text-sm">
@@ -775,8 +902,129 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       </button>
 
       {/* Editor Area */}
-      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'mr-64' : ''} ${isLeftSidebarOpen ? 'ml-72' : ''}`}>
+      <div className={`flex-1 transition-all duration-300 relative ${isSidebarOpen ? 'mr-64' : ''} ${isLeftSidebarOpen ? 'ml-72' : ''}`}>
         <EditorContent editor={editor} />
+        
+        {/* Loading Indicator Overlay */}
+        {loaderPosition && (
+          <div 
+            className="ai-loading-indicator absolute pointer-events-none"
+            style={{ 
+              top: loaderPosition.top, 
+              left: loaderPosition.left,
+            }}
+          >
+            <div className="orbit-container">
+              <div className="orbit-dot"></div>
+              <div className="orbit-dot"></div>
+              <div className="orbit-dot"></div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Touch Controls */}
+      <div className="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3">
+        {/* Completion Controls - shown when completion is active */}
+        {completion.isActive && (
+          <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50">
+            {/* Word count indicator */}
+            <span className="text-xs text-zinc-400 px-2">
+              {completion.selectedCount}/{completion.words.length}
+            </span>
+            
+            {/* Deselect word */}
+            <button
+              type="button"
+              onClick={deselectLastWord}
+              disabled={completion.selectedCount === 0}
+              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Deselect word"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            
+            {/* Select next word */}
+            <button
+              type="button"
+              onClick={selectNextWord}
+              disabled={completion.selectedCount >= completion.words.length}
+              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Select word"
+            >
+              <ChevronRight size={18} />
+            </button>
+            
+            {/* Select all */}
+            <button
+              type="button"
+              onClick={selectAllWords}
+              disabled={completion.selectedCount >= completion.words.length}
+              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Select all"
+            >
+              <ChevronsRight size={18} />
+            </button>
+            
+            {/* Divider */}
+            <div className="w-px h-5 bg-zinc-700" />
+            
+            {/* Regenerate (when no words selected) or Confirm */}
+            {completion.selectedCount === 0 ? (
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                className="p-2 rounded-full text-amber-400 hover:text-amber-300 hover:bg-zinc-700 transition-colors"
+                title="Regenerate"
+              >
+                <RotateCcw size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={confirmCompletion}
+                className="p-2 rounded-full text-green-400 hover:text-green-300 hover:bg-zinc-700 transition-colors"
+                title="Confirm"
+              >
+                <Check size={18} />
+              </button>
+            )}
+            
+            {/* Cancel */}
+            <button
+              type="button"
+              onClick={cancelCompletion}
+              className="p-2 rounded-full text-red-400 hover:text-red-300 hover:bg-zinc-700 transition-colors"
+              title="Cancel"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
+
+        {/* Cancel generation button - shown during loading */}
+        {isAutoCompleting && !completion.isActive && (
+          <button
+            type="button"
+            onClick={cancelGeneration}
+            className="p-3 rounded-full bg-zinc-900/95 backdrop-blur-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-all shadow-lg border border-zinc-700/50"
+            title="Cancel generation"
+          >
+            <X size={22} />
+          </button>
+        )}
+
+        {/* Main FAB - Generate completion */}
+        {!completion.isActive && !isAutoCompleting && (
+          <button
+            type="button"
+            onClick={handleAutoComplete}
+            className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
+            title="Generate AI completion"
+          >
+            <Split size={24} />
+          </button>
+        )}
       </div>
     </div>
   );
