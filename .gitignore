@@ -47,8 +47,8 @@ next-env.d.ts
 !package.json
 !package-lock.json
 !README.md
-!.gitignore
-!.env.local
+.gitignore
+.env.local
 !next.config.ts
 !tsconfig.json
 !postcss.config.mjs
