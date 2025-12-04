@@ -6,7 +6,7 @@ import TiptapEditor from '../components/TiptapEditor';
 import { ArrowDown } from 'lucide-react';
 
 export default function Home() {
-  const [content, setContent] = useState<any>(null);
+  const [content, setContent] = useState<object | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const DOC_ID = 'infinite-doc-v1';
 
@@ -32,7 +32,7 @@ export default function Home() {
 
   // Debounced save function
   const saveContent = useCallback(
-    debounce(async (newContent: any) => {
+    debounce(async (newContent: object) => {
       try {
         await fetch('/api/doc', {
           method: 'POST',
@@ -44,10 +44,10 @@ export default function Home() {
         console.error('Failed to save doc', e);
       }
     }, 1000),
-    []
+    [DOC_ID]
   );
 
-  const handleUpdate = (newContent: any) => {
+  const handleUpdate = (newContent: object) => {
     saveContent(newContent);
   };
 

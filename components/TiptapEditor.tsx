@@ -13,8 +13,8 @@ import { AVAILABLE_MODELS, DEFAULT_MODEL, ModelId, ModelPricing, formatCost } fr
 import { CompletionMark } from '@/lib/completion-mark';
 
 interface TiptapEditorProps {
-  initialContent: any;
-  onContentUpdate: (content: any) => void;
+  initialContent: object | null;
+  onContentUpdate: (content: object) => void;
 }
 
 const DEFAULT_PROMPT = 'Provide a two sentence long completion to this text:';
@@ -73,8 +73,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   const [promptsLoaded, setPromptsLoaded] = useState(false);
   
   // Editor styling controls (desktop only - mobile uses hardcoded values)
-  const [lineHeight, setLineHeight] = useState(1.6);
-  const [horizontalPadding, setHorizontalPadding] = useState(2); // in rem
+  const [lineHeight] = useState(1.6);
+  const [horizontalPadding] = useState(2); // in rem
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768;
@@ -82,12 +82,100 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     return false;
   });
   
+  // Refs for direct DOM manipulation to avoid re-renders during scroll/resize
+  const fabContainerRef = useRef<HTMLDivElement>(null);
+  const leftToggleRef = useRef<HTMLButtonElement>(null);
+  const rightToggleRef = useRef<HTMLButtonElement>(null);
+  
   // Track if component is mounted (for portal SSR safety)
   const [isMounted, setIsMounted] = useState(false);
-  
-  // Ref for FAB container to intercept touches
-  const fabContainerRef = useRef<HTMLDivElement>(null);
-  
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Set mounted state for portal SSR safety
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Handle Visual Viewport updates for sticky positioning
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+
+    const viewport = window.visualViewport;
+    
+    const updatePositions = () => {
+      // Use offsetTop to keep elements pinned to the top of the visual viewport
+      // This handles the case where the layout viewport scrolls or the keyboard
+      // pushes content but we want these controls to stay "sticky" to the glass
+      const topOffset = viewport.offsetTop;
+      
+      // Base top position (e.g., 32px or 2rem)
+      const baseTop = 32; 
+      
+      // Update Sidebar Toggles
+      if (leftToggleRef.current) {
+        leftToggleRef.current.style.top = `${topOffset + baseTop}px`;
+      }
+      
+      if (rightToggleRef.current) {
+        rightToggleRef.current.style.top = `${topOffset + baseTop}px`;
+      }
+      
+      // Update FAB Container - Position it on the right, below the sidebar toggle
+      // Sidebar toggle is ~40px height + 32px top = ~72px. Let's put FAB at ~80px top
+      if (fabContainerRef.current) {
+        // For the FAB, we want it top-aligned now, not bottom-aligned
+        // It should be below the right sidebar toggle
+        const fabTop = topOffset + 80; // 80px from top of visual viewport
+        fabContainerRef.current.style.top = `${fabTop}px`;
+        // Reset bottom to auto to override any previous styles if switching modes
+        fabContainerRef.current.style.bottom = 'auto';
+      }
+    };
+
+    viewport.addEventListener('resize', updatePositions);
+    viewport.addEventListener('scroll', updatePositions);
+    
+    // Initial call
+    updatePositions();
+    
+    return () => {
+      viewport.removeEventListener('resize', updatePositions);
+      viewport.removeEventListener('scroll', updatePositions);
+    };
+  }, [isMounted]);
+
+  // We also need to update position when component updates or portal mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      const viewport = window.visualViewport;
+      const topOffset = viewport.offsetTop;
+      const baseTop = 32;
+      
+      if (leftToggleRef.current) {
+        leftToggleRef.current.style.top = `${topOffset + baseTop}px`;
+      }
+      
+      if (rightToggleRef.current) {
+        rightToggleRef.current.style.top = `${topOffset + baseTop}px`;
+      }
+      
+      if (fabContainerRef.current) {
+        const fabTop = topOffset + 80;
+        fabContainerRef.current.style.top = `${fabTop}px`;
+        fabContainerRef.current.style.bottom = 'auto';
+      }
+    }
+  });
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -115,21 +203,6 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       },
     },
   });
-
-  // Detect mobile viewport
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Set mounted state for portal SSR safety
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Get effective values (mobile uses hardcoded tight values)
   const effectiveLineHeight = isMobile ? 1.0 : lineHeight;
@@ -702,61 +775,6 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     }
   }, [initialContent, editor]);
 
-  // Detect mobile keyboard visibility using Visual Viewport API and update FAB position
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.visualViewport) return;
-
-    const viewport = window.visualViewport;
-    
-    const updateFabPosition = () => {
-      if (!fabContainerRef.current) return;
-
-      // Calculate the offset from the bottom of the layout viewport
-      // to the bottom of the visual viewport
-      const layoutViewportHeight = window.innerHeight;
-      const visualViewportHeight = viewport.height;
-      const visualViewportTop = viewport.offsetTop;
-      
-      // The bottom of the visual viewport relative to the layout viewport
-      const visualViewportBottom = visualViewportTop + visualViewportHeight;
-      
-      // How much we need to push the FAB up from the bottom of the layout viewport
-      const offsetFromBottom = Math.max(0, layoutViewportHeight - visualViewportBottom);
-      
-      // Apply position via style directly to avoid re-renders
-      fabContainerRef.current.style.bottom = `${offsetFromBottom}px`;
-      fabContainerRef.current.style.paddingBottom = offsetFromBottom > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)';
-    };
-
-    viewport.addEventListener('resize', updateFabPosition);
-    viewport.addEventListener('scroll', updateFabPosition);
-    
-    // Initial update
-    updateFabPosition();
-    
-    return () => {
-      viewport.removeEventListener('resize', updateFabPosition);
-      viewport.removeEventListener('scroll', updateFabPosition);
-    };
-  }, []); // Effect runs once on mount, but we need to make sure ref is populated
-  
-  // We also need to update position when component updates or portal mounts, 
-  // as the style attribute might be reset by React
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.visualViewport && fabContainerRef.current) {
-      // Trigger a manual update of the position
-      const viewport = window.visualViewport;
-      const layoutViewportHeight = window.innerHeight;
-      const visualViewportHeight = viewport.height;
-      const visualViewportTop = viewport.offsetTop;
-      const visualViewportBottom = visualViewportTop + visualViewportHeight;
-      const offsetFromBottom = Math.max(0, layoutViewportHeight - visualViewportBottom);
-      
-      fabContainerRef.current.style.bottom = `${offsetFromBottom}px`;
-      fabContainerRef.current.style.paddingBottom = offsetFromBottom > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)';
-    }
-  });
-
   if (!editor) {
     return null;
   }
@@ -944,6 +962,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       {/* Left Toggle Button */}
       <button
         type="button"
+        ref={leftToggleRef}
         onClick={toggleLeftSidebar}
         className={`fixed top-8 z-[60] p-2 bg-zinc-800 rounded-r-md text-white transition-all duration-300 cursor-pointer hover:bg-zinc-700 ${
           isLeftSidebarOpen ? 'left-72 max-md:left-72' : 'left-0'
@@ -1016,9 +1035,10 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         </div>
       </div>
 
-      {/* Toggle Button */}
+      {/* Right Toggle Button */}
       <button
         type="button"
+        ref={rightToggleRef}
         onClick={toggleSidebar}
         className={`fixed top-8 z-[60] p-2 bg-zinc-800 rounded-l-md text-white transition-all duration-300 cursor-pointer hover:bg-zinc-700 ${
           isSidebarOpen ? 'right-64 max-md:right-64' : 'right-0'
@@ -1064,11 +1084,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       {isMounted && createPortal(
         <div 
           ref={fabContainerRef}
-          className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 pb-6 select-none"
+          className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 select-none"
           contentEditable={false}
           style={{ 
-            // bottom and paddingBottom are handled by ref
-            height: completion.isActive ? '180px' : '120px',
+            // top is handled by ref
+            // removed bottom positioning
+            // width adjusted for controls
             width: completion.isActive ? '100%' : '100px',
             pointerEvents: 'auto',
             WebkitTapHighlightColor: 'transparent',
