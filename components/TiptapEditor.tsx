@@ -20,7 +20,7 @@ const DEFAULT_PROMPT = 'Provide a two sentence long completion to this text:';
 const DEFAULT_REGEN_PROMPT_TEMPLATE = `This is the already generated text:
 {{ATTEMPTS}}
 
-Now generate a different path to the completion for the next attempt.
+Now generate a drastically  different path to the completion for the next attempt, very far deferent from the ones that are shown in the attempts above.
 {{ORIGINAL_PROMPT}}`;
 
 interface CompletionState {

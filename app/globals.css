@@ -207,9 +207,19 @@ body {
   margin-bottom: 0;
 }
 
-/* Editor styling transitions */
+/* Editor styling - ensure inline styles take precedence */
 .editor-area .ProseMirror {
   transition: padding 0.2s ease, line-height 0.2s ease;
+}
+
+/* Override prose plugin defaults to allow dynamic control */
+.editor-area .prose,
+.editor-area .prose-invert,
+.editor-area .prose p,
+.editor-area .prose-invert p,
+.editor-area .prose li,
+.editor-area .prose-invert li {
+  line-height: inherit !important;
 }
 
 /* Range input styling */
@@ -260,10 +270,18 @@ input[type="range"]::-moz-range-thumb {
 
 /* Mobile Editor Styles */
 @media (max-width: 768px) {
-  /* Mobile-specific adjustments */
+  /* Mobile-specific adjustments - don't override inline styles */
   .ProseMirror {
     font-size: 16px !important; /* Prevents iOS zoom on focus */
     min-height: calc(100vh - 100px);
+  }
+  
+  /* Override prose plugin's line-height to allow inline styles to work */
+  .editor-area .prose,
+  .editor-area .prose-invert,
+  .editor-area .prose p,
+  .editor-area .prose-invert p {
+    line-height: inherit !important;
   }
   
   .ProseMirror p {
