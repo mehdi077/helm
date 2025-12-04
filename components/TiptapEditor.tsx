@@ -496,7 +496,9 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     }
     setLoaderPosition(null);
     setIsAutoCompleting(false);
-  }, []);
+    // Keep editor focused (prevents keyboard from hiding on mobile)
+    editor?.commands.focus();
+  }, [editor]);
 
   const confirmCompletion = useCallback(() => {
     if (!editor || !completion.isActive || !completion.range) return;
@@ -624,6 +626,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     // Position cursor at the selection boundary (splitPos)
     if (splitPos < to) {
       editor.chain()
+        .focus()
         .setTextSelection({ from, to })
         .unsetCompletionMark()
         .setTextSelection({ from: splitPos, to })
@@ -633,6 +636,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     } else {
       // All words selected - remove all marks, cursor at end
       editor.chain()
+        .focus()
         .setTextSelection({ from, to })
         .unsetCompletionMark()
         .setTextSelection(splitPos)  // Cursor at end of selection
@@ -1065,8 +1069,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 pb-6 select-none"
           contentEditable={false}
           style={{ 
-            bottom: '0px',
-            paddingBottom: 'env(safe-area-inset-bottom, 24px)',
+            bottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0px',
+            paddingBottom: keyboardHeight > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)',
             height: completion.isActive ? '180px' : '120px',
             width: completion.isActive ? '100%' : '100px',
             pointerEvents: 'auto',
@@ -1090,6 +1094,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               {/* Deselect word */}
               <button
                 type="button"
+                tabIndex={-1}
                 onMouseDown={(e) => e.preventDefault()}
                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 onTouchEnd={(e) => { e.preventDefault(); if (completion.selectedCount > 0) deselectLastWord(); }}
@@ -1105,6 +1110,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               {/* Select next word */}
               <button
                 type="button"
+                tabIndex={-1}
                 onMouseDown={(e) => e.preventDefault()}
                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 onTouchEnd={(e) => { e.preventDefault(); if (completion.selectedCount < completion.words.length) selectNextWord(); }}
@@ -1120,6 +1126,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               {/* Select all */}
               <button
                 type="button"
+                tabIndex={-1}
                 onMouseDown={(e) => e.preventDefault()}
                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 onTouchEnd={(e) => { e.preventDefault(); if (completion.selectedCount < completion.words.length) selectAllWords(); }}
@@ -1139,6 +1146,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               {completion.selectedCount === 0 ? (
                 <button
                   type="button"
+                  tabIndex={-1}
                   onMouseDown={(e) => e.preventDefault()}
                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   onTouchEnd={(e) => { e.preventDefault(); handleRegenerate(); }}
@@ -1152,6 +1160,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               ) : (
                 <button
                   type="button"
+                  tabIndex={-1}
                   onMouseDown={(e) => e.preventDefault()}
                   onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   onTouchEnd={(e) => { e.preventDefault(); confirmCompletion(); }}
@@ -1167,6 +1176,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               {/* Cancel */}
               <button
                 type="button"
+                tabIndex={-1}
                 onMouseDown={(e) => e.preventDefault()}
                 onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 onTouchEnd={(e) => { e.preventDefault(); cancelCompletion(); }}
@@ -1184,6 +1194,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           {isAutoCompleting && !completion.isActive && (
             <button
               type="button"
+              tabIndex={-1}
               onMouseDown={(e) => e.preventDefault()}
               onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
               onTouchEnd={(e) => { e.preventDefault(); cancelGeneration(); }}
@@ -1200,6 +1211,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           {!completion.isActive && !isAutoCompleting && (
             <button
               type="button"
+              tabIndex={-1}
               onMouseDown={(e) => e.preventDefault()}
               onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
               onTouchEnd={(e) => { e.preventDefault(); handleAutoComplete(); }}
