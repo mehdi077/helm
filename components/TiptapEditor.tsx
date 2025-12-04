@@ -7,7 +7,7 @@ import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { debounce } from 'lodash';
-import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Bold, Highlighter, Palette, Sparkles, Loader2, DollarSign, RefreshCw, Check, X, ChevronsRight, RotateCcw, Split, AlignJustify, MoveHorizontal } from 'lucide-react';
 import { AVAILABLE_MODELS, DEFAULT_MODEL, ModelId, ModelPricing, formatCost } from '@/lib/model-config';
 import { CompletionMark } from '@/lib/completion-mark';
 
@@ -70,6 +70,13 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   const [modelPricing, setModelPricing] = useState<ModelPricingMap>({});
   const [lastGenerationCost, setLastGenerationCost] = useState<number | null>(null);
   const [promptsLoaded, setPromptsLoaded] = useState(false);
+  
+  // Editor styling controls
+  const [lineHeight, setLineHeight] = useState(1.6);
+  const [horizontalPadding, setHorizontalPadding] = useState(2); // in rem
+  
+  // Keyboard visibility for mobile FAB positioning
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   const editor = useEditor({
     immediatelyRender: false,
@@ -631,6 +638,27 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     }
   }, [initialContent, editor]);
 
+  // Detect mobile keyboard visibility using Visual Viewport API
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+
+    const viewport = window.visualViewport;
+    
+    const handleResize = () => {
+      // Calculate keyboard height by comparing viewport height to window height
+      const keyboardH = window.innerHeight - viewport.height;
+      setKeyboardHeight(keyboardH > 100 ? keyboardH : 0); // Only set if significant (keyboard)
+    };
+
+    viewport.addEventListener('resize', handleResize);
+    viewport.addEventListener('scroll', handleResize);
+    
+    return () => {
+      viewport.removeEventListener('resize', handleResize);
+      viewport.removeEventListener('scroll', handleResize);
+    };
+  }, []);
+
   if (!editor) {
     return null;
   }
@@ -887,6 +915,48 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               ))}
             </div>
           </div>
+
+          {/* Line Spacing Control */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm"><AlignJustify size={16} /> Line Spacing</span>
+              <span className="text-xs text-zinc-500">{lineHeight.toFixed(1)}</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.1"
+              value={lineHeight}
+              onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+              className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-xs text-zinc-500">
+              <span>Tight</span>
+              <span>Relaxed</span>
+            </div>
+          </div>
+
+          {/* Horizontal Margins Control */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm"><MoveHorizontal size={16} /> Margins</span>
+              <span className="text-xs text-zinc-500">{horizontalPadding.toFixed(1)}rem</span>
+            </div>
+            <input
+              type="range"
+              min="0.5"
+              max="6"
+              step="0.5"
+              value={horizontalPadding}
+              onChange={(e) => setHorizontalPadding(parseFloat(e.target.value))}
+              className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-xs text-zinc-500">
+              <span>Narrow</span>
+              <span>Wide</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -913,7 +983,13 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       )}
 
       {/* Editor Area */}
-      <div className={`flex-1 transition-all duration-300 relative ${isSidebarOpen ? 'md:mr-64' : ''} ${isLeftSidebarOpen ? 'md:ml-72' : ''}`}>
+      <div 
+        className={`flex-1 transition-all duration-300 relative editor-area ${isSidebarOpen ? 'md:mr-64' : ''} ${isLeftSidebarOpen ? 'md:ml-72' : ''}`}
+        style={{
+          ['--editor-line-height' as string]: lineHeight,
+          ['--editor-padding' as string]: `${horizontalPadding}rem`,
+        } as React.CSSProperties}
+      >
         <EditorContent editor={editor} />
         
         {/* Loading Indicator Overlay */}
@@ -934,8 +1010,11 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         )}
       </div>
 
-      {/* Mobile Touch Controls */}
-      <div className="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3">
+      {/* Mobile Touch Controls - moves up when keyboard is visible */}
+      <div 
+        className="fixed right-6 z-[80] flex flex-col items-end gap-3 transition-all duration-200"
+        style={{ bottom: keyboardHeight > 0 ? `${keyboardHeight + 24}px` : '24px' }}
+      >
         {/* Completion Controls - shown when completion is active */}
         {completion.isActive && (
           <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50">
