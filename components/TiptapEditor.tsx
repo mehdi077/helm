@@ -119,8 +119,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   }, []);
 
   // Get effective values (mobile uses hardcoded tight values)
-  const effectiveLineHeight = isMobile ? 0.5 : lineHeight;
-  const effectiveHorizontalPadding = isMobile ? 0.5 : horizontalPadding;
+  const effectiveLineHeight = isMobile ? 1.2 : lineHeight;
+  const effectiveHorizontalPadding = isMobile ? 1 : horizontalPadding;
 
   // Update editor styles when controls change
   useEffect(() => {
