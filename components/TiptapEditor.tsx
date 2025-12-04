@@ -272,6 +272,9 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
   const handleAutoComplete = useCallback(async () => {
     if (!editor || isAutoCompleting) return;
+    
+    // Keep editor focused (prevents keyboard from hiding on mobile)
+    editor.commands.focus();
 
     const text = getTextForCompletion();
     if (!text) {
@@ -1099,6 +1102,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         {!completion.isActive && !isAutoCompleting && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
             onClick={handleAutoComplete}
             className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
             title="Generate AI completion"
