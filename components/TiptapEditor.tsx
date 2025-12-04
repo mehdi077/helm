@@ -86,6 +86,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
   const fabContainerRef = useRef<HTMLDivElement>(null);
   const leftToggleRef = useRef<HTMLButtonElement>(null);
   const rightToggleRef = useRef<HTMLButtonElement>(null);
+  const statusIndicatorRef = useRef<HTMLDivElement>(null);
   
   // Track if component is mounted (for portal SSR safety)
   const [isMounted, setIsMounted] = useState(false);
@@ -128,6 +129,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       if (rightToggleRef.current) {
         rightToggleRef.current.style.top = `${topOffset + baseTop}px`;
       }
+
+      // Update Status Indicator (Completion Bar)
+      // Position it at the top as well, aligned with toggles but centered
+      if (statusIndicatorRef.current) {
+        statusIndicatorRef.current.style.top = `${topOffset + 16}px`;
+      }
       
       // Update FAB Container - Position it on the right, below the sidebar toggle
       // Sidebar toggle is ~40px height + 32px top = ~72px. Let's put FAB at ~80px top
@@ -166,6 +173,10 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       
       if (rightToggleRef.current) {
         rightToggleRef.current.style.top = `${topOffset + baseTop}px`;
+      }
+
+      if (statusIndicatorRef.current) {
+        statusIndicatorRef.current.style.top = `${topOffset + 16}px`;
       }
       
       if (fabContainerRef.current) {
@@ -784,14 +795,18 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
   return (
     <div className={`flex w-full min-h-screen bg-black text-white relative ${completion.isActive ? 'completion-active' : ''} ${isAutoCompleting ? 'generating' : ''}`}>
-      {/* Completion Mode Indicator - Hidden on mobile (mobile has touch controls) */}
+      {/* Completion Mode Indicator - Visible on both mobile and desktop now, positioned via ref on mobile */}
       {completion.isActive && (
-        <div className="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-[70] bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg items-center gap-3 text-sm">
-          <Sparkles size={16} />
-          <span>
-            <strong>{completion.selectedCount}</strong> / {completion.words.length} words selected
+        <div 
+          ref={statusIndicatorRef}
+          className="flex fixed left-1/2 -translate-x-1/2 z-[70] bg-blue-600 text-white px-3 py-2 rounded-lg shadow-lg items-center gap-2 md:gap-3 text-xs md:text-sm max-w-[calc(100%-100px)] md:max-w-none whitespace-nowrap overflow-hidden"
+          style={{ top: '1rem' }} // default fallback
+        >
+          <Sparkles size={16} className="shrink-0" />
+          <span className="truncate">
+            <strong>{completion.selectedCount}</strong> / {completion.words.length} words
             {attemptHistory.attempts.length > 0 && (
-              <span className="text-blue-200 ml-2">(attempt {attemptHistory.attempts.length + 1})</span>
+              <span className="text-blue-200 ml-2 hidden md:inline">(attempt {attemptHistory.attempts.length + 1})</span>
             )}
           </span>
           {lastGenerationCost !== null && (
@@ -800,16 +815,19 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               <span className="text-green-300 font-mono">${lastGenerationCost.toFixed(6)}</span>
             </>
           )}
-          <span className="text-blue-200">|</span>
-          <span className="text-blue-200">→ select</span>
-          <span className="text-blue-200">← deselect</span>
-          <span className="text-green-200">Space all</span>
-          {completion.selectedCount === 0 ? (
-            <span className="text-yellow-200">Tab regenerate</span>
-          ) : (
-            <span className="text-blue-200">Tab confirm</span>
-          )}
-          <span className="text-blue-200">Esc cancel</span>
+          {/* Desktop-only shortcuts hints */}
+          <div className="hidden md:flex items-center gap-3 ml-2">
+            <span className="text-blue-200">|</span>
+            <span className="text-blue-200">→ select</span>
+            <span className="text-blue-200">← deselect</span>
+            <span className="text-green-200">Space all</span>
+            {completion.selectedCount === 0 ? (
+              <span className="text-yellow-200">Tab regenerate</span>
+            ) : (
+              <span className="text-blue-200">Tab confirm</span>
+            )}
+            <span className="text-blue-200">Esc cancel</span>
+          </div>
         </div>
       )}
 
