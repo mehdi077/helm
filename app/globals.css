@@ -27,3 +27,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* AI Completion Ghost Styles */
+.completion-ghost {
+  color: #60a5fa;
+  opacity: 0.5;
+}
+
+/* Completion mode indicator */
+.completion-active .ProseMirror {
+  caret-color: #60a5fa;
+}

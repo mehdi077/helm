@@ -39,3 +39,30 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ignore everything by default
+*
+
+# But unignore essential files (excluding data.db)
+!package.json
+!package-lock.json
+!README.md
+!.gitignore
+!.env.local
+!next.config.ts
+!tsconfig.json
+!postcss.config.mjs
+!eslint.config.mjs
+
+# Also explicitly ignore data.db
+data.db
+
+# Keep directories but track only the files we want
+!app/
+!components/
+!lib/
+!docs/
+!public/
+
+# But ignore everything inside these directories except what we explicitly want
+# We'll let git handle the files we want to track in these directories
