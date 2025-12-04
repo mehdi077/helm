@@ -82,9 +82,6 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     return false;
   });
   
-  // Keyboard visibility for mobile FAB positioning
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  
   // Track if component is mounted (for portal SSR safety)
   const [isMounted, setIsMounted] = useState(false);
   
@@ -705,28 +702,60 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     }
   }, [initialContent, editor]);
 
-  // Detect mobile keyboard visibility using Visual Viewport API
+  // Detect mobile keyboard visibility using Visual Viewport API and update FAB position
   useEffect(() => {
     if (typeof window === 'undefined' || !window.visualViewport) return;
 
     const viewport = window.visualViewport;
     
-    const handleResize = () => {
-      // Calculate keyboard height by comparing viewport height to window height
-      const keyboardH = window.innerHeight - viewport.height;
-      setKeyboardHeight(keyboardH > 100 ? keyboardH : 0); // Only set if significant (keyboard)
+    const updateFabPosition = () => {
+      if (!fabContainerRef.current) return;
+
+      // Calculate the offset from the bottom of the layout viewport
+      // to the bottom of the visual viewport
+      const layoutViewportHeight = window.innerHeight;
+      const visualViewportHeight = viewport.height;
+      const visualViewportTop = viewport.offsetTop;
+      
+      // The bottom of the visual viewport relative to the layout viewport
+      const visualViewportBottom = visualViewportTop + visualViewportHeight;
+      
+      // How much we need to push the FAB up from the bottom of the layout viewport
+      const offsetFromBottom = Math.max(0, layoutViewportHeight - visualViewportBottom);
+      
+      // Apply position via style directly to avoid re-renders
+      fabContainerRef.current.style.bottom = `${offsetFromBottom}px`;
+      fabContainerRef.current.style.paddingBottom = offsetFromBottom > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)';
     };
 
-    viewport.addEventListener('resize', handleResize);
-    viewport.addEventListener('scroll', handleResize);
+    viewport.addEventListener('resize', updateFabPosition);
+    viewport.addEventListener('scroll', updateFabPosition);
+    
+    // Initial update
+    updateFabPosition();
     
     return () => {
-      viewport.removeEventListener('resize', handleResize);
-      viewport.removeEventListener('scroll', handleResize);
+      viewport.removeEventListener('resize', updateFabPosition);
+      viewport.removeEventListener('scroll', updateFabPosition);
     };
-  }, []);
-
-
+  }, []); // Effect runs once on mount, but we need to make sure ref is populated
+  
+  // We also need to update position when component updates or portal mounts, 
+  // as the style attribute might be reset by React
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.visualViewport && fabContainerRef.current) {
+      // Trigger a manual update of the position
+      const viewport = window.visualViewport;
+      const layoutViewportHeight = window.innerHeight;
+      const visualViewportHeight = viewport.height;
+      const visualViewportTop = viewport.offsetTop;
+      const visualViewportBottom = visualViewportTop + visualViewportHeight;
+      const offsetFromBottom = Math.max(0, layoutViewportHeight - visualViewportBottom);
+      
+      fabContainerRef.current.style.bottom = `${offsetFromBottom}px`;
+      fabContainerRef.current.style.paddingBottom = offsetFromBottom > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)';
+    }
+  });
 
   if (!editor) {
     return null;
@@ -766,7 +795,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         </div>
       )}
 
-      {/* Left Sidebar - AI Auto-complete */}
+      {/* Left Sidebar - AI Assistant */}
       <div 
         className={`fixed top-0 left-0 h-full bg-zinc-900 border-r border-zinc-800 transition-all duration-300 ease-in-out z-[60] ${
           isLeftSidebarOpen ? 'w-72' : 'w-0'
@@ -1038,8 +1067,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 pb-6 select-none"
           contentEditable={false}
           style={{ 
-            bottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0px',
-            paddingBottom: keyboardHeight > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)',
+            // bottom and paddingBottom are handled by ref
             height: completion.isActive ? '180px' : '120px',
             width: completion.isActive ? '100%' : '100px',
             pointerEvents: 'auto',
