@@ -1020,7 +1020,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       >
         {/* Completion Controls - shown when completion is active */}
         {completion.isActive && (
-          <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50">
+          <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50" style={{ touchAction: 'manipulation' }}>
             {/* Word count indicator */}
             <span className="text-xs text-zinc-400 px-2">
               {completion.selectedCount}/{completion.words.length}
@@ -1030,10 +1030,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onTouchStart={(e) => e.preventDefault()}
+              onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onTouchEnd={(e) => { e.preventDefault(); if (completion.selectedCount > 0) deselectLastWord(); }}
               onClick={deselectLastWord}
               disabled={completion.selectedCount === 0}
-              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-none"
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
               title="Deselect word"
             >
               <ChevronLeft size={18} />
@@ -1043,10 +1045,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onTouchStart={(e) => e.preventDefault()}
+              onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onTouchEnd={(e) => { e.preventDefault(); if (completion.selectedCount < completion.words.length) selectNextWord(); }}
               onClick={selectNextWord}
               disabled={completion.selectedCount >= completion.words.length}
-              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-none"
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
               title="Select word"
             >
               <ChevronRight size={18} />
@@ -1056,10 +1060,12 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onTouchStart={(e) => e.preventDefault()}
+              onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onTouchEnd={(e) => { e.preventDefault(); if (completion.selectedCount < completion.words.length) selectAllWords(); }}
               onClick={selectAllWords}
               disabled={completion.selectedCount >= completion.words.length}
-              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed select-none"
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
               title="Select all"
             >
               <ChevronsRight size={18} />
@@ -1073,9 +1079,11 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
-                onTouchStart={(e) => e.preventDefault()}
+                onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onTouchEnd={(e) => { e.preventDefault(); handleRegenerate(); }}
                 onClick={handleRegenerate}
-                className="p-2 rounded-full text-amber-400 hover:text-amber-300 hover:bg-zinc-700 transition-colors"
+                className="p-2 rounded-full text-amber-400 hover:text-amber-300 hover:bg-zinc-700 transition-colors select-none"
+                style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
                 title="Regenerate"
               >
                 <RotateCcw size={18} />
@@ -1084,9 +1092,11 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
-                onTouchStart={(e) => e.preventDefault()}
+                onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onTouchEnd={(e) => { e.preventDefault(); confirmCompletion(); }}
                 onClick={confirmCompletion}
-                className="p-2 rounded-full text-green-400 hover:text-green-300 hover:bg-zinc-700 transition-colors"
+                className="p-2 rounded-full text-green-400 hover:text-green-300 hover:bg-zinc-700 transition-colors select-none"
+                style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
                 title="Confirm"
               >
                 <Check size={18} />
@@ -1097,9 +1107,11 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onTouchStart={(e) => e.preventDefault()}
+              onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onTouchEnd={(e) => { e.preventDefault(); cancelCompletion(); }}
               onClick={cancelCompletion}
-              className="p-2 rounded-full text-red-400 hover:text-red-300 hover:bg-zinc-700 transition-colors"
+              className="p-2 rounded-full text-red-400 hover:text-red-300 hover:bg-zinc-700 transition-colors select-none"
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
               title="Cancel"
             >
               <X size={18} />
@@ -1112,9 +1124,11 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
-            onTouchStart={(e) => e.preventDefault()}
+            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); cancelGeneration(); }}
             onClick={cancelGeneration}
-            className="p-3 rounded-full bg-zinc-900/95 backdrop-blur-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-all shadow-lg border border-zinc-700/50"
+            className="p-3 rounded-full bg-zinc-900/95 backdrop-blur-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-all shadow-lg border border-zinc-700/50 select-none"
+            style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
             title="Cancel generation"
           >
             <X size={22} />
@@ -1126,9 +1140,11 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
-            onTouchStart={(e) => e.preventDefault()}
+            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onTouchEnd={(e) => { e.preventDefault(); handleAutoComplete(); }}
             onClick={handleAutoComplete}
-            className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
+            className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95 select-none"
+            style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
             title="Generate AI completion"
           >
             <Split size={24} />
