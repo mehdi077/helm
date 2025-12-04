@@ -270,41 +270,39 @@ input[type="range"]::-moz-range-thumb {
 
 /* Mobile Editor Styles */
 @media (max-width: 768px) {
-  /* Mobile-specific adjustments - don't override inline styles */
-  .ProseMirror {
+  /* Force tight line spacing and minimal margins on mobile */
+  .editor-area .ProseMirror {
     font-size: 16px !important; /* Prevents iOS zoom on focus */
     min-height: calc(100vh - 100px);
+    line-height: 1.1 !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
   }
   
-  /* Override prose plugin's line-height to allow inline styles to work */
-  .editor-area .prose,
-  .editor-area .prose-invert,
+  /* Force all text elements to use tight line height */
+  .editor-area .ProseMirror *,
   .editor-area .prose *,
-  .editor-area .prose-invert *,
-  .editor-area .ProseMirror,
-  .editor-area .ProseMirror * {
-    line-height: inherit !important;
+  .editor-area .prose-invert * {
+    line-height: 1.1 !important;
   }
   
-  .ProseMirror p {
-    margin-bottom: 0.5em;
-    margin-top: 0;
+  .editor-area .ProseMirror p,
+  .editor-area .prose p,
+  .editor-area .prose-invert p {
+    margin-bottom: 0.25em !important;
+    margin-top: 0 !important;
+    line-height: 1.1 !important;
   }
   
-  .ProseMirror > * + * {
-    margin-top: 0.25em;
+  .editor-area .ProseMirror > * + * {
+    margin-top: 0.15em !important;
   }
   
-  /* Prevent large gaps in prose */
-  .prose p,
-  .prose-invert p {
-    margin-top: 0;
-    margin-bottom: 0.5em;
-  }
-  
-  .prose > :first-child,
-  .prose-invert > :first-child {
-    margin-top: 0;
+  .editor-area .prose > :first-child,
+  .editor-area .prose-invert > :first-child {
+    margin-top: 0 !important;
   }
 }
 
