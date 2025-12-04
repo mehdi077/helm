@@ -726,38 +726,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
     };
   }, []);
 
-  // Intercept touches in the FAB area to prevent them from reaching the editor
-  useEffect(() => {
-    if (!isMobile || !isMounted) return;
 
-    const handleTouchStart = (e: TouchEvent) => {
-      const fabContainer = fabContainerRef.current;
-      if (!fabContainer) return;
-
-      const touch = e.touches[0];
-      const rect = fabContainer.getBoundingClientRect();
-      
-      // Check if touch is within FAB container bounds
-      if (
-        touch.clientX >= rect.left &&
-        touch.clientX <= rect.right &&
-        touch.clientY >= rect.top &&
-        touch.clientY <= rect.bottom
-      ) {
-        // Touch is in FAB area - prevent it from reaching editor
-        // Note: This might prevent scrolling in this area, but ensures FAB is clickable
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-
-    // Use capture phase to intercept before editor receives it
-    document.addEventListener('touchstart', handleTouchStart, { capture: true });
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
-    };
-  }, [isMobile, isMounted]);
 
   if (!editor) {
     return null;
@@ -1066,15 +1035,11 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
       {isMounted && createPortal(
         <div 
           ref={fabContainerRef}
-          className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-6 pb-6 select-none"
+          className="fixed right-0 z-[9999] flex flex-col items-end justify-end pr-4 select-none md:hidden"
           contentEditable={false}
           style={{ 
-            bottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0px',
-            paddingBottom: keyboardHeight > 0 ? '12px' : 'env(safe-area-inset-bottom, 24px)',
-            height: completion.isActive ? '180px' : '120px',
-            width: completion.isActive ? '100%' : '100px',
-            pointerEvents: 'auto',
-            background: 'rgba(0,0,0,0.8)',
+            bottom: keyboardHeight > 0 ? `${keyboardHeight + 12}px` : 'max(24px, env(safe-area-inset-bottom, 24px))',
+            pointerEvents: 'none',
             WebkitTapHighlightColor: 'transparent',
             WebkitUserSelect: 'none',
             userSelect: 'none',
@@ -1085,7 +1050,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
         >
           {/* Completion Controls - shown when completion is active */}
           {completion.isActive && (
-            <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50" style={{ touchAction: 'manipulation' }}>
+            <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg border border-zinc-700/50" style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}>
               {/* Word count indicator */}
               <span className="text-xs text-zinc-400 px-2">
                 {completion.selectedCount}/{completion.words.length}
@@ -1200,7 +1165,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               onTouchEnd={(e) => { e.preventDefault(); cancelGeneration(); }}
               onClick={cancelGeneration}
               className="p-3 rounded-full bg-zinc-900/95 backdrop-blur-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-all shadow-lg border border-zinc-700/50 select-none"
-              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', pointerEvents: 'auto' }}
               title="Cancel generation"
             >
               <X size={22} />
@@ -1217,7 +1182,7 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
               onTouchEnd={(e) => { e.preventDefault(); handleAutoComplete(); }}
               onClick={handleAutoComplete}
               className="p-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95 select-none"
-              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+              style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', pointerEvents: 'auto' }}
               title="Generate AI completion"
             >
               <Split size={24} />

@@ -337,6 +337,12 @@ input[type="range"]::-moz-range-thumb {
   
   .editor-area .ProseMirror {
     /* Add bottom padding to prevent content under FAB */
-    padding-bottom: 100px !important;
+    padding-bottom: 150px !important;
+  }
+  
+  /* Ensure body doesn't overflow and create scroll issues */
+  html, body {
+    overflow-x: hidden;
+    overscroll-behavior: none;
   }
 }
