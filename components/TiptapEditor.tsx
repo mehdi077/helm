@@ -1032,8 +1032,8 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
 
       {/* Mobile Touch Controls - moves up when keyboard is visible */}
       <div 
-        className="fixed right-6 z-[80] flex flex-col items-end gap-3 transition-all duration-200"
-        style={{ bottom: keyboardHeight > 0 ? `${keyboardHeight + 24}px` : '24px' }}
+        className="fixed right-6 bottom-6 z-[9999] flex flex-col items-end gap-3 transition-transform duration-200 pointer-events-auto"
+        style={{ transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none' }}
       >
         {/* Completion Controls - shown when completion is active */}
         {completion.isActive && (
