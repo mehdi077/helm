@@ -1043,7 +1043,6 @@ const TiptapEditor = ({ initialContent, onContentUpdate }: TiptapEditorProps) =>
             height: completion.isActive ? '180px' : '120px',
             width: completion.isActive ? '100%' : '100px',
             pointerEvents: 'auto',
-            background: 'rgba(0,0,0,0.8)',
             WebkitTapHighlightColor: 'transparent',
             WebkitUserSelect: 'none',
             userSelect: 'none',
